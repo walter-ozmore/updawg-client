@@ -2,7 +2,8 @@ import requests
 import json
 import time
 import os
-from pythonping import ping
+import platform
+import subprocess
 
 '''
   Response status codes are based on HTTP status codes
@@ -117,23 +118,7 @@ def cycle(customChecks=None):
       else:
         # Get the address' status by pinging it
         address["lastUpdate"] = int(time.time())
-        try:
-          response = ping(address["pingingAddress"], count=1, timeout=1)
-        except:
-          # Set the address to down when it misses two pings
-          if address["status"] in range(200, 300):
-            address["status"] = 300
-          else:
-            address["status"] = 400
-          continue
-
-        if response.success():
-          address["status"] = 200
-        else:
-          if address["status"] in range(200, 300):
-            address["status"] = 300
-          else:
-            address["status"] = 400
+        address["status"] = 200 if ping(address["pingingAddress"]) else 400
 
       
       # Notify the user of the status in the console
@@ -164,6 +149,24 @@ def loadClientCode():
   with open("client-code.txt", "r") as file:
     clientCode = file.read()
   return clientCode
+
+def ping(server_address):
+  system_platform = platform.system()
+
+  if system_platform == "Windows":
+    # On Windows, use the 'ping' command
+    command = ["ping", "-n", "1", server_address]
+  elif system_platform == "Linux" or system_platform == "Darwin":
+    # On Linux and macOS, use the 'ping' command
+    command = ["ping", "-c", "1", server_address]
+  else:
+    raise NotImplementedError("Unsupported platform: " + system_platform)
+
+  try:
+    subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+    return True  # Server responded to ping
+  except subprocess.CalledProcessError:
+    return False  # Server did not respond to ping
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0'}
 url = "https://www.everyoneandeverything.org/updawg-v2/ajax/client"
