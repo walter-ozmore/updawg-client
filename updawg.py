@@ -4,6 +4,7 @@ import time
 import os
 import platform
 import subprocess
+from ping import ping
 
 '''
   Response status codes are based on HTTP status codes
@@ -48,7 +49,10 @@ def updateData(data, local=False):
   post("update", data)
 
 
-def post(function, jsonObj={}):
+def post(function, jsonObj={}, clientCode=None, userId=None):
+  if clientCode == None or userId == None:
+    return
+  
   jsonString = json.dumps(jsonObj)
 
   # Data to be sent in the request body
@@ -60,7 +64,10 @@ def post(function, jsonObj={}):
   }
 
   # Send POST request
-  response = requests.post(url, data=args, headers=headers)
+  try:
+    response = requests.post(url, data=args, headers=headers)
+  except:
+    return
 
   # Ignore errors
   if response.status_code != 200:
@@ -75,15 +82,16 @@ def post(function, jsonObj={}):
     return
   return data
 
-def cycle(customChecks=None):
-  global clientCode
-
+def cycle(customChecks=None, clientCode=None):
   if clientCode == None:
-    clientCode = loadClientCode()
+    return
 
   # Grab data from the server
-  print("Fetching data from server", end="", flush=True)
-  data = post("fetch")
+  print("Fetching data from server", flush=True)
+  data = post("fetch", clientCode=clientCode)
+  if data == None:
+    print("Failed to get data from the server")
+    return
   
   # Check for errors, when there is an error print it out
   # ClientCode is invalid, exit program
@@ -118,7 +126,13 @@ def cycle(customChecks=None):
       else:
         # Get the address' status by pinging it
         address["lastUpdate"] = int(time.time())
-        address["status"] = 200 if ping(address["pingingAddress"]) else 400
+        numOfRetries = 4
+        while numOfRetries > 0:
+          numOfRetries -= 1
+          response = ping(address["pingingAddress"])
+          if response["online"]:
+            break
+        address["status"] = 200 if response["online"] else 400
 
       
       # Notify the user of the status in the console
@@ -126,49 +140,21 @@ def cycle(customChecks=None):
       if address["status"] in range(300, 400): print(bcolors.WARNING, end="")
       if address["status"] in range(400, 500): print(bcolors.FAIL   , end="")
       if address["status"] in range(500, 600): print(bcolors.FAIL   , end="")
-      print(address["status"], bcolors.ENDC)
+      print(address["status"], bcolors.ENDC, end="")
+
+      if response != None:
+        print(response["response_time"])
+      else:
+        print()
 
   # Return the updated list to the server
   print("\nSending update data to server", end="", flush=True)
-  data = post("update", data)
+  data = post("update", data, clientCode=clientCode)
   clearLine()
 
   if data["code"] != 0:
     print("SERVER: " + data["message"])
 
-
-def saveClientCode():
-  with open("client-code.txt", "w") as file:
-    file.write(clientCode)
-
-def loadClientCode():
-  if os.path.exists("client-code.txt") == False:
-    print("ERROR: " + os.getcwd() + "/client-code.txt was not found!")
-    exit()
-  
-  with open("client-code.txt", "r") as file:
-    clientCode = file.read()
-  return clientCode
-
-def ping(server_address):
-  system_platform = platform.system()
-
-  if system_platform == "Windows":
-    # On Windows, use the 'ping' command
-    command = ["ping", "-n", "1", server_address]
-  elif system_platform == "Linux" or system_platform == "Darwin":
-    # On Linux and macOS, use the 'ping' command
-    command = ["ping", "-c", "1", server_address]
-  else:
-    raise NotImplementedError("Unsupported platform: " + system_platform)
-
-  try:
-    subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-    return True  # Server responded to ping
-  except subprocess.CalledProcessError:
-    return False  # Server did not respond to ping
-
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0'}
-url = "https://www.everyoneandeverything.org/updawg-v2/ajax/client"
-userId = 8
-clientCode = None
+url = "https://everyoneandeverything.org/updawg-v2/ajax/client"
+userId = -1
