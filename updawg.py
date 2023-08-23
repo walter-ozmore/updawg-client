@@ -82,13 +82,15 @@ def post(function, jsonObj={}, clientCode=None, userId=None):
     return
   return data
 
-def cycle(customChecks=None, clientCode=None):
+def cycle(customChecks=None, clientCode=None, userId=None):
   if clientCode == None:
+    return
+  if userId == None:
     return
 
   # Grab data from the server
   print("Fetching data from server", flush=True)
-  data = post("fetch", clientCode=clientCode)
+  data = post("fetch", clientCode=clientCode, userId=userId)
   if data == None:
     print("Failed to get data from the server")
     return
@@ -149,7 +151,7 @@ def cycle(customChecks=None, clientCode=None):
 
   # Return the updated list to the server
   print("\nSending update data to server", end="", flush=True)
-  data = post("update", data, clientCode=clientCode)
+  data = post("update", data, clientCode=clientCode, userId=userId)
   clearLine()
 
   if data["code"] != 0:

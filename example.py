@@ -20,7 +20,7 @@ customChecks = [
 ]
 
 while True:
-  updawg.cycle(clientCode=config["client-code"])
+  updawg.cycle(clientCode=config["client-code"], userId=config["user-id"])
 
   # Sleep if needed
   print("Sleeping", end="", flush=True)
