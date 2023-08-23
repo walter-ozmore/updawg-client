@@ -1,5 +1,6 @@
 import platform
 import subprocess
+import re
 
 def ping(server_address):
   system_platform = platform.system()
@@ -14,7 +15,21 @@ def ping(server_address):
     raise NotImplementedError("Unsupported platform: " + system_platform)
 
   try:
-    subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-    return True  # Server responded to ping
+    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text=True)
+    if system_platform == "Windows":
+      # Extract response time from Windows ping output
+      time_match = re.search(r"time=(\d+)ms", result.stdout)
+      if time_match:
+        response_time = int(time_match.group(1))
+      else:
+        response_time = None
+    else:
+      # Extract response time from Linux/macOS ping output
+      time_match = re.search(r"time=(\d+(\.\d+)?) ms", result.stdout)
+      if time_match:
+        response_time = float(time_match.group(1))
+      else:
+        response_time = None
+    return {"online": True, "response_time": response_time}
   except subprocess.CalledProcessError:
-    return False  # Server did not respond to ping
+    return {"online": False, "response_time": None}
