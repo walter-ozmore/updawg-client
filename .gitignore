@@ -2,3 +2,4 @@ config.yaml
 data.json
 __pycache__
 /testing/*
+start.py
