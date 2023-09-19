@@ -38,11 +38,10 @@ def cleanFolder():
 
     # Delete files and folders
     path = os.path.join('.', filename)
-    print(os.path.abspath(path))
-    # if os.path.isfile(path):
-    #   os.remove(path)
-    # else:
-    #   shutil.rmtree(path)
+    if os.path.isfile(path):
+      os.remove(path)
+    else:
+      shutil.rmtree(path)
 
 def moveRepo():
   print("Installing new version")
@@ -62,8 +61,8 @@ def moveRepo():
 def cleanUp():
   print("Cleaning up")
   shutil.rmtree(repoFolder)
-  shutil.rmtree(".git")
-  shutil.rmtree(".gitignore")
+  shutil.rmtree("./.git")
+  os.remove("./.gitignore")
 
 # Set working directory to the file path to prevent removal of other files
 script_dir = os.path.dirname(os.path.abspath(__file__))
