@@ -2,15 +2,15 @@ import platform
 import subprocess
 import re
 
-def ping(server_address):
+def ping(server_address, tries=1):
   system_platform = platform.system()
 
   if system_platform == "Windows":
     # On Windows, use the 'ping' command
-    command = ["ping", "-n", "1", server_address]
+    command = ["ping", "-n", str(tries), server_address]
   elif system_platform == "Linux" or system_platform == "Darwin":
     # On Linux and macOS, use the 'ping' command
-    command = ["ping", "-c", "1", server_address]
+    command = ["ping", "-c", str(tries), server_address]
   else:
     raise NotImplementedError("Unsupported platform: " + system_platform)
 

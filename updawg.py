@@ -126,15 +126,7 @@ def cycle(customChecks=None, clientCode=None, userId=None):
       if customFunction != None:
         address = customFunction(address)
       else:
-        # Get the address' status by pinging it
-        address["lastUpdate"] = int(time.time())
-        numOfRetries = 4
-        while numOfRetries > 0:
-          numOfRetries -= 1
-          response = ping(address["pingingAddress"])
-          if response["online"]:
-            break
-        address["status"] = 200 if response["online"] else 400
+        address = defaultAction(address)
 
       
       # Notify the user of the status in the console
@@ -142,21 +134,100 @@ def cycle(customChecks=None, clientCode=None, userId=None):
       if address["status"] in range(300, 400): print(bcolors.WARNING, end="")
       if address["status"] in range(400, 500): print(bcolors.FAIL   , end="")
       if address["status"] in range(500, 600): print(bcolors.FAIL   , end="")
-      print(address["status"], bcolors.ENDC, end="")
-
-      if response != None:
-        print(response["response_time"])
-      else:
-        print()
+      print(address["status"], bcolors.ENDC)
 
   # Return the updated list to the server
   print("\nSending update data to server", end="", flush=True)
-  data = post("update", data, clientCode=clientCode, userId=userId)
+  # data = post("update", data, clientCode=clientCode, userId=userId)
   clearLine()
 
   if data["code"] != 0:
     print("SERVER: " + data["message"])
 
+def defaultAction(address):
+  # Get the address' status by pinging it
+  address["lastUpdate"] = int(time.time())
+  numOfRetries = 1
+  while numOfRetries > 0:
+    numOfRetries -= 1
+    response = ping(address["pingingAddress"])
+    if response["online"]:
+      break
+  address["status"] = 200 if response["online"] else 400
+  return address
+
+
+def notifyUsers():
+  global lastEmailSentTime
+
+  if time.time() - lastEmailSentTime < 60*15:
+    return
+  lastEmailSentTime = time.time()
+
+  import smtplib
+  from email.mime.text import MIMEText
+  from email.mime.multipart import MIMEMultipart
+  from email.mime.application import MIMEApplication
+
+  userEmails = ["soulsilver27@hotmail.com", "walter@cooperpropane.com"]
+
+  subject = "UpDawg - Alert"
+  # HTML content for the email
+  rows = ""
+  for address in addressEmails:
+    rows += "<tr><td>"+address["name"]+"</td><td>"+str(address["status"])+"</td></tr>"
+
+  html_content = """
+    <html>
+    <head>
+      <style>
+        th {
+          text-align: left;
+        }
+      </style>
+    </head>
+    <body>
+      <center><h1>UpDawg Alert</h1></center>
+      <table style="width: 100%">
+        <tr>
+          <th>Name</th>
+          <th>Status</th>
+        </tr>
+      """+rows+"""
+      </table>
+    </body>
+    </html>
+  """
+  # List servers down
+
+  print("Sending emails")
+  for receiver_email in userEmails:
+    # Email configuration
+    # receiver_email = "soulsilver27@hotmail.com"
+    sender_email, password = config["email"]["email"], config["email"]["password"]
+    server, port = config["email"]["server"], config["email"]["port"]
+
+    # Create the email content
+    msg = MIMEMultipart()
+    msg["From"] = sender_email
+    msg["To"] = receiver_email
+    msg["Subject"] = subject
+
+    # Attach the HTML content
+    msg.attach(MIMEText(html_content, 'html'))
+
+    # Connect to the SMTP server and send the email
+    try:
+      server = smtplib.SMTP(server, port)
+      server.starttls()
+      server.login(sender_email, password)
+      server.sendmail(sender_email, receiver_email, msg.as_string())
+      server.quit()
+      print("Email sent successfully!")
+    except Exception as e:
+      print("Error sending email:", str(e))
+
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0'}
 url = "https://everyoneandeverything.org/updawg-v2/ajax/client"
 userId = -1
+lastEmailSentTime = 0
