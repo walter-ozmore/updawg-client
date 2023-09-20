@@ -1,9 +1,6 @@
 import requests
 import json
 import time
-import os
-import platform
-import subprocess
 from ping import ping
 
 '''
@@ -29,8 +26,10 @@ class bcolors:
   BOLD = '\033[1m'
   UNDERLINE = '\033[4m'
 
+
 def clearLine():
   print("\r" + ("".join(" " for _ in range(30))) + "\r", end="", flush=True)
+
 
 def fetchData(local=False):
   if local:
@@ -40,6 +39,7 @@ def fetchData(local=False):
     return data
 
   return post("fetch")
+
 
 def updateData(data, local=False):
   if local:
@@ -82,81 +82,85 @@ def post(function, jsonObj={}, clientCode=None, userId=None):
     return
   return data
 
-def cycle(customChecks=None, clientCode=None, userId=None):
-  if clientCode == None:
-    return
-  if userId == None:
-    return
 
-  # Grab data from the server
-  print("Fetching data from server", flush=True)
-  data = post("fetch", clientCode=clientCode, userId=userId)
-  if data == None:
-    print("Failed to get data from the server")
-    return
-  
-  # Check for errors, when there is an error print it out
-  # ClientCode is invalid, exit program
-  if(data["code"] == 1):
-    print("\rERROR: " + data["message"] + "\n")
-    exit()
-  # Clear the line
-  clearLine()
+def pingCheck(address):
+  # Get the address' status by pinging it
+  address["lastUpdate"] = int(time.time())
+  numOfRetries = 4
+  while numOfRetries > 0:
+    numOfRetries -= 1
+    response = ping(address["pingingAddress"])
+    if response["online"]:
+      break
+  address["status"] = 200 if response["online"] else 400
+  return address
 
-  # Update client code
-  clientCode = data["clientCode"]
-
-  # Loop though and ping all addresses then store them in a list for return
-  for collection in data['collections'].items():
-    # Ping the addresses
-    for address in collection[1]["addresses"]:
-      # Notify the user which address is being worked on
+def checkAddress(currentTime):
+  for collectionID in data["collections"]:
+    addresses = data["collections"][collectionID]["addresses"]
+    for address in addresses:
+      if currentTime - int(address["lastUpdate"]) < 30:
+        continue
+      # Draw address
       string = "%-20s" % (address["name"] if address["name"] != None and len(address["name"]) > 0 else address["pingingAddress"])
       print(string, end="", flush=True)
-
-      # Get custom function
-      customFunction = None
-      if(customChecks != None):
-        for check in customChecks:
-          if(address[check[0]] in check[1]):
-            customFunction = check[2]
-            break
       
+      # Check on the address
+      hasChecked = False
+      for customCheck in customChecks:
+        if address[customCheck[0]] in customCheck[1]:
+          address = customCheck[2](address)
+          hasChecked = True
+          break
+      if hasChecked == False:
+        address = pingCheck(address)
+      address["lastUpdate"] = str(currentTime)
 
-      if customFunction != None:
-        address = customFunction(address)
-      else:
-        # Get the address' status by pinging it
-        address["lastUpdate"] = int(time.time())
-        numOfRetries = 4
-        while numOfRetries > 0:
-          numOfRetries -= 1
-          response = ping(address["pingingAddress"])
-          if response["online"]:
-            break
-        address["status"] = 200 if response["online"] else 400
-
-      
-      # Notify the user of the status in the console
+      # Draw the updated status && Notify the user of the status in the console
       if address["status"] in range(200, 300): print(bcolors.OKGREEN, end="")
       if address["status"] in range(300, 400): print(bcolors.WARNING, end="")
       if address["status"] in range(400, 500): print(bcolors.FAIL   , end="")
       if address["status"] in range(500, 600): print(bcolors.FAIL   , end="")
-      print(address["status"], bcolors.ENDC, end="")
+      print(address["status"], bcolors.ENDC)
+      # Put code here to loop back up to the while True: loop
+      return
+    
+def start():
+  global data
 
-      if response != None:
-        print(response["response_time"])
-      else:
-        print()
+  updateInterval = 30
+  lastUpdate = time.time()
 
-  # Return the updated list to the server
-  print("\nSending update data to server", end="", flush=True)
-  data = post("update", data, clientCode=clientCode, userId=userId)
-  clearLine()
+  # Load in all our data
+  data = post("fetch", clientCode=clientCode, userId=userId)
+  if data == None:
+    print("UPDATE: Failed to get data from the server")
+    return
 
-  if data["code"] != 0:
-    print("SERVER: " + data["message"])
+  # Thread:
+  while True:
+    currentTime = int(time.time())
+
+    # Check to see if we should update the server
+    if currentTime - lastUpdate >= updateInterval:
+      print("Updating with the server...")
+      post("update", data, clientCode=clientCode, userId=userId)
+      while True:
+        data = post("fetch", clientCode=clientCode, userId=userId)
+        if data != None:
+          break
+      lastUpdate = int(time.time())
+      continue
+
+    # Check for an address that hasnt been updated in a while
+    checkAddress(currentTime)
+
+    # Sleep for a little bit to prevent hoging the system resources
+    time.sleep( .1 )
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0'}
 url = "https://everyoneandeverything.org/updawg-v2/ajax/client"
 userId = -1
+clientCode = ""
+data = None
+customChecks = []

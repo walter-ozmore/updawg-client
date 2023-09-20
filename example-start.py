@@ -1,33 +1,20 @@
 import updawg
-import time
 import yaml
 
 def setDown(address):
-  address["status"] = 2
+  address["status"] = 400
   return address
 
 def load_config(file_path):
-    with open(file_path, 'r') as yaml_file:
-        config = yaml.safe_load(yaml_file)
-    return config
+  with open(file_path, 'r') as yaml_file:
+    config = yaml.safe_load(yaml_file)
+  return config
 
 config = load_config('config.yaml')
+updawg.userId = config["user-id"]
+updawg.clientCode = config["client-code"]
+# updawg.customChecks = [
+#   ("name", ["FGCore1", "Other Test Server B"], setDown)
+# ]
 
-
-# ("Index to check", "Array to check against", "Function to call on hit")
-customChecks = [
-  ("name", ["CoreServer", "LocalServer"], setDown)
-]
-
-while True:
-  updawg.cycle(clientCode=config["client-code"], userId=config["user-id"])
-
-  # Sleep if needed
-  print("Sleeping", end="", flush=True)
-
-  sleepTime, ticks = 30, 5
-  for x in range(ticks):
-    print(".", end="", flush=True)
-    time.sleep(sleepTime/ticks)
-  
-  print( "\r" + "".join("=" for _ in range(25)) + "\n" )
+updawg.start()
