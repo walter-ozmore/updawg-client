@@ -96,34 +96,56 @@ def pingCheck(address):
   return address
 
 def checkAddress(currentTime):
+  # TODO: Make this in to an algorithm that can be selected by a user
+  # Get the oldest address that has been updated
+  oldestAddress = None
+  oldestTimestamp = None
+  currentTimestamp = time.time()
+
+  # Get the oldest address that has been updated
   for collectionID in data["collections"]:
     addresses = data["collections"][collectionID]["addresses"]
     for address in addresses:
-      if currentTime - int(address["lastUpdate"]) < 30:
-        continue
-      # Draw address
-      string = "%-20s" % (address["name"] if address["name"] != None and len(address["name"]) > 0 else address["pingingAddress"])
-      print(string, end="", flush=True)
-      
-      # Check on the address
-      hasChecked = False
-      for customCheck in customChecks:
-        if address[customCheck[0]] in customCheck[1]:
-          address = customCheck[2](address)
-          hasChecked = True
-          break
-      if hasChecked == False:
-        address = pingCheck(address)
-      address["lastUpdate"] = str(currentTime)
+      timestamp = float(address["lastUpdate"])
 
-      # Draw the updated status && Notify the user of the status in the console
-      if address["status"] in range(200, 300): print(bcolors.OKGREEN, end="")
-      if address["status"] in range(300, 400): print(bcolors.WARNING, end="")
-      if address["status"] in range(400, 500): print(bcolors.FAIL   , end="")
-      if address["status"] in range(500, 600): print(bcolors.FAIL   , end="")
-      print(address["status"], bcolors.ENDC)
-      # Put code here to loop back up to the while True: loop
-      return
+      if currentTimestamp - timestamp < 30:
+        continue
+      
+      if oldestTimestamp is None or timestamp < oldestTimestamp:
+        oldestTimestamp = timestamp
+        oldestAddress = address
+
+  # If there is no oldestAddress then there is nothing to update
+  if oldestAddress == None:
+    return
+
+  # Changing the name of oldestAddress so it looks better, also im lazy
+  address = oldestAddress
+
+  # Draw address
+  string = "%-20s" % (address["name"] if address["name"] != None and len(address["name"]) > 0 else address["pingingAddress"])
+  print(string, end="", flush=True)
+  
+  # Check on the address
+  hasChecked = False
+  for customCheck in customChecks:
+    if address[customCheck[0]] in customCheck[1]:
+      address = customCheck[2](address)
+      hasChecked = True
+      break
+  
+  if hasChecked == False:
+    address = pingCheck(address)
+  
+  # Set the last update time
+  address["lastUpdate"] = str(time.time())
+
+  # Draw the updated status && Notify the user of the status in the console
+  if address["status"] in range(200, 300): print(bcolors.OKGREEN, end="")
+  if address["status"] in range(300, 400): print(bcolors.WARNING, end="")
+  if address["status"] in range(400, 500): print(bcolors.FAIL   , end="")
+  if address["status"] in range(500, 600): print(bcolors.FAIL   , end="")
+  print(address["status"], bcolors.ENDC)
     
 def start():
   global data

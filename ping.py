@@ -6,11 +6,12 @@ def ping(server_address):
   system_platform = platform.system()
 
   if system_platform == "Windows":
-    # On Windows, use the 'ping' command
     command = ["ping", "-n", "1", server_address]
-  elif system_platform == "Linux" or system_platform == "Darwin":
-    # On Linux and macOS, use the 'ping' command
-    command = ["ping", "-c", "1", server_address]
+  elif system_platform == "Linux" or system_platform == "Darwin": # Linux or Mac
+    # command = ["ping", "-c", "1", server_address]
+    # Using timeout to try and prevent addresses that are down from hanging the system
+    # timeout 2 ping -c1
+    command = ["timeout", "2", "ping", "-c", "1", server_address]
   else:
     raise NotImplementedError("Unsupported platform: " + system_platform)
 
