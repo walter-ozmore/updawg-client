@@ -1,0 +1,11 @@
+[Unit]
+Description=UpDawg - A network monitoring service
+After=network.target
+
+[Service]
+WorkingDirectory=/etc/updawg
+ExecStart=python3 /etc/updawg/start.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

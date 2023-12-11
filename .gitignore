@@ -1,5 +1,5 @@
 config.yaml
 data.json
 __pycache__
-/testing/*
+/testing
 start.py
