@@ -35,6 +35,12 @@ else
     fi
 fi
 
+# Copy all example files to base config files
+if [ ! -e "/etc/updawg/config.yaml" ]; then
+    sudo cp /etc/updawg/example-config.yaml /etc/updawg/config.yaml
+if [ ! -e "/etc/updawg/start.py" ]; then
+    sudo cp /etc/updawg/example-start.py /etc/updawg/start.py
+
 # Update systemctl stuff
 sudo cp /etc/updawg/install/updawg.service /etc/systemd/system/
 sudo systemctl daemon-reload
