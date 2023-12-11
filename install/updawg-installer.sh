@@ -37,6 +37,7 @@ fi
 
 # Update systemctl stuff
 sudo cp /etc/updawg/install/updawg.service /etc/systemd/system/
+sudo systemctl daemon-reload
 
 # Echo info 
 echo Job Done - run 'sudo systemctl start updawg' to start the program
