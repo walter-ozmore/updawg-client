@@ -107,13 +107,19 @@ def checkAddress(currentTime):
     addresses = data["collections"][collectionID]["addresses"]
     for address in addresses:
       timestamp = float(address["lastUpdate"])
+      interval = float(address["pingInterval"])
 
-      if currentTimestamp - timestamp < 30:
+      if interval == None or interval < 0:
+        interval = 30
+
+
+      if currentTimestamp - timestamp < interval:
         continue
       
       if oldestTimestamp is None or timestamp < oldestTimestamp:
         oldestTimestamp = timestamp
         oldestAddress = address
+        # print(address) # For testing
 
   # If there is no oldestAddress then there is nothing to update
   if oldestAddress == None:
@@ -181,7 +187,8 @@ def start():
     time.sleep( .1 )
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0'}
-url = "https://everyoneandeverything.org/updawg-v2/ajax/client"
+# url = "https://everyoneandeverything.org/updawg-v2/ajax/client"
+url = "http://127.0.0.1/updawg/ajax/client"
 userId = -1
 clientCode = ""
 data = None
