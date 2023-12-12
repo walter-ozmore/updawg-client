@@ -28,7 +28,7 @@ else
     # Check if the directory is a Git repository
     if [ -d .git ]; then
         echo "Updating the existing repository in $target_directory..."
-        git pull origin master
+        git pull origin main
     else
         echo "Error: $target_directory is not a Git repository."
         exit 1
@@ -38,8 +38,11 @@ fi
 # Copy all example files to base config files
 if [ ! -e "/etc/updawg/config.yaml" ]; then
     sudo cp /etc/updawg/example-config.yaml /etc/updawg/config.yaml
+fi
+
 if [ ! -e "/etc/updawg/start.py" ]; then
     sudo cp /etc/updawg/example-start.py /etc/updawg/start.py
+fi
 
 # Update systemctl stuff
 sudo cp /etc/updawg/install/updawg.service /etc/systemd/system/
