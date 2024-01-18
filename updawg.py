@@ -2,6 +2,7 @@ import requests
 import json
 import time
 from ping import ping
+import copy
 
 '''
   Response status codes are based on HTTP status codes
@@ -35,7 +36,11 @@ def post(data={}):
   response = requests.post(url, data=data, headers=headers)
 
   # Decode the json
-  data = json.loads(response.text)
+  try:
+    data = json.loads(response.text)
+  except:
+    print(response.text)
+
   return data
 
 def pingCheck(address):
@@ -50,7 +55,9 @@ def pingCheck(address):
   address["status"] = 200 if response["online"] else 400
   return address
 
-def checkAddress(currentTime):
+def checkAddress():
+  global updatedData
+
   # TODO: Make this in to an algorithm that can be selected by a user
   # Get the oldest address that has been updated
   oldestAddress = None
@@ -62,10 +69,12 @@ def checkAddress(currentTime):
     addresses = data["collections"][collectionID]["addresses"]
     for address in addresses:
       timestamp = float(address["lastUpdate"])
-      interval = float(address["pingInterval"]) if address["pingInterval"] != None else 30
+      interval = address["pingInterval"]
 
       if interval == None or interval < 0:
         interval = 30
+      else:
+        interval = float(address["pingInterval"])
 
 
       if currentTimestamp - timestamp < interval:
@@ -88,7 +97,7 @@ def checkAddress(currentTime):
   print(string, end="", flush=True)
 
   # Check on the address
-  hasChecked = False
+  hasChecked = False # When true this address has a custom address
   for customCheck in customChecks:
     if address[customCheck[0]] in customCheck[1]:
       address = customCheck[2](address)
@@ -97,6 +106,9 @@ def checkAddress(currentTime):
 
   if hasChecked == False:
     address = pingCheck(address)
+    hasChecked = True
+
+  updatedData.append(copy.deepcopy(address))
 
   # Set the last update time
   address["lastUpdate"] = str(time.time())
@@ -109,10 +121,11 @@ def checkAddress(currentTime):
   print(address["status"], bcolors.ENDC)
 
 def start():
-  global data
+  global data, updatedData
 
-  updateInterval = 30
+  updateInterval = 15
   lastUpdate = time.time()
+  updatedData = []
 
   # Load in all our data
   data = post({"function": 9, "clientCode": clientCode})
@@ -127,23 +140,21 @@ def start():
     # Check to see if we should update the server
     if currentTime - lastUpdate >= updateInterval:
       print("Updating with the server...")
-      # post("update", data, clientCode=clientCode, userId=userId)
-      data = post({"function": 9, "clientCode": clientCode, "data": data})
+      data = post({"function": 9, "clientCode": clientCode, "data": json.dumps(updatedData)})
+      updatedData = []
       lastUpdate = int(time.time())
       continue
 
     # Check for an address that hasnt been updated in a while
-    checkAddress(currentTime)
+    checkAddress()
 
     # Sleep for a little bit to prevent hoging the system resources
     time.sleep( .1 )
 
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0'}
-url = "http://127.0.0.1/updawg/ajax/api"
 clientCode = ""
 data = None
 customChecks = []
 
-
-clientCode = "x06xITRsW9"
-start()
+# Do not change any of this information unless you know what you are doing
+headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0'}
+url = "http://walter-ozmore.dev/updawg/client/api/v0.1.php"
