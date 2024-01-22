@@ -16,37 +16,43 @@ else
     sudo apt-get install -y git
 fi
 
-# Create the target directory if it doesn't exist
 if [ ! -d "$target_directory" ]; then
-    sudo mkdir -p "$target_directory"
-    echo "Cloning the repository into $target_directory..."
-    git clone "$repo_url" "$target_directory"
-else
-    # Change directory to the existing repository
-    cd "$target_directory"
+  # Create the target directory if it doesn't exist
+  sudo mkdir -p "$target_directory"
 
-    # Check if the directory is a Git repository
-    if [ -d .git ]; then
-        echo "Updating the existing repository in $target_directory..."
-        git pull origin main
-    else
-        echo "Error: $target_directory is not a Git repository."
-        exit 1
-    fi
+  # Clone the repo
+  echo "Cloning the repository into $target_directory..."
+  git clone "$repo_url" "$target_directory"
+  exit
+else
+  # Change directory to the existing repository
+  cd "$target_directory"
+
+  # Check if the directory is a Git repository
+  if [ -d .git ]; then
+    # Update the repo
+    echo "Updating the existing repository in $target_directory..."
+    git pull origin main
+  else
+    # Break
+    echo "Error: $target_directory is not a Git repository."
+    exit 1
+  fi
 fi
 
-# Copy all example files to base config files
+# Copy all example files to base config files if the base configs don't exist
 if [ ! -e "/etc/updawg/config.yaml" ]; then
-    sudo cp /etc/updawg/example-config.yaml /etc/updawg/config.yaml
+  sudo cp /etc/updawg/example-config.yaml /etc/updawg/config.yaml
 fi
 
 if [ ! -e "/etc/updawg/start.py" ]; then
-    sudo cp /etc/updawg/example-start.py /etc/updawg/start.py
+  sudo cp /etc/updawg/example-start.py /etc/updawg/start.py
 fi
 
 # Update systemctl stuff
 sudo cp /etc/updawg/install/updawg.service /etc/systemd/system/
+# sudo cp /etc/updawg/install/updawg.timer /etc/systemd/system/
 sudo systemctl daemon-reload
 
-# Echo info 
+# Echo info
 echo Job Done - run 'sudo systemctl start updawg' to start the program

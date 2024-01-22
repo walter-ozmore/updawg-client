@@ -31,9 +31,22 @@ def clearLine():
   print("\r" + ("".join(" " for _ in range(30))) + "\r", end="", flush=True)
 
 def post(data={}):
-  print("POST", url)
-  # Send POST request
-  response = requests.post(url, data=data, headers=headers)
+  print("Attempting POST request", url)
+
+
+  while True:
+    try:
+      # Send POST request
+      response = requests.post(url, data=data, headers=headers)
+      break
+    except:
+      # Catch and wait
+      sleepTime = 15
+      while sleepTime >= 0:
+        print(f"ERROR: Failed to get data, retrying in {sleepTime} secs", end=" \r", flush=True)
+        time.sleep(1) # Sleep, the error is usually network related
+        sleepTime -= 1
+  print()
 
   # Decode the json
   try:
@@ -93,7 +106,7 @@ def checkAddress():
   address = oldestAddress
 
   # Draw address
-  string = "%-20s" % (address["name"] if address["name"] != None and len(address["name"]) > 0 else address["pingingAddress"])
+  string = "%-30s" % (address["name"] if address["name"] != None and len(address["name"]) > 0 else address["pingingAddress"])
   print(string, end="", flush=True)
 
   # Check on the address
@@ -123,7 +136,7 @@ def checkAddress():
 def start():
   global data, updatedData
 
-  updateInterval = 15
+  updateInterval = 60
   lastUpdate = time.time()
   updatedData = []
 
