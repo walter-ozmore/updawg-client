@@ -77,6 +77,8 @@ def checkAddress():
   oldestTimestamp = None
   currentTimestamp = time.time()
 
+  if "collections" not in data: return
+
   # Get the oldest address that has been updated
   for collectionID in data["collections"]:
     addresses = data["collections"][collectionID]["addresses"]
