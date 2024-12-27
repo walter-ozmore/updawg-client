@@ -22,6 +22,7 @@ config = load_config('config.yaml')
 
 updawg.userId = config["user-id"]
 updawg.clientCode = config["client-code"]
+updawg.url = config["url"]
 
 # Create array for custom checks
 # (checkType, checkFilters, func)

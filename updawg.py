@@ -230,4 +230,4 @@ customChecks = []
 
 # Do not change any of this information unless you know what you are doing
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0'}
-url = "http://walter-ozmore.dev/updawg/client/api/v0.1.php"
+url = None
