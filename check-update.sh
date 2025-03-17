@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Pull changes from origin/master
-git pull -f origin master
+git reset --hard HEAD
+git pull -f -p origin main
 
 # Check for any changes made since the last pull
 CHANGES=$(git diff --name-only HEAD@{1}..HEAD)
@@ -14,4 +15,5 @@ fi
 
 # Restart the updawg service if any changes were made
 echo "Restarting service"
-systemctl restart --reload updawg.service
+systemctl daemon-reload 
+systemctl restart updawg.service
