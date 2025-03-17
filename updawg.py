@@ -43,7 +43,8 @@ def post(data={}):
 			# Send POST request
 			response = requests.post(url, data=data, headers=headers)
 			break
-		except:
+		except Exception as e:
+			# print(e) # Print error for debugging
 			# Catch and wait
 			sleepTime = 15
 			while sleepTime >= 0:
