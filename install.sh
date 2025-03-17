@@ -43,6 +43,7 @@ install() {
 
 	# Make our folders and copy our files
 	mkdir -p "/etc/updawg"
+	chmod 755 -R /etc/updawg # Set permissions
 	rsync -av --delete --exclude='start.py' --exclude='config.yaml' "$INSTALL_FILES/" "/etc/updawg" > /dev/null 2>&1
 
 	# Copy our example files to live files
@@ -55,7 +56,7 @@ install() {
 	fi
 
 	# Copy our systemctl file
-	cp "$INSTALL_FILES/updawg.service" "/etc/systemd/system"
+	ln -S "/etc/updawg/updawg.service" "/etc/systemd/system" # Runner file
 	systemctl daemon-reload
 }
 

@@ -20,9 +20,8 @@ def load_config(file_path):
 
 config = load_config('config.yaml')
 
-updawg.userId = config["user-id"]
 updawg.clientCode = config["client-code"]
-updawg.url = config["url"]
+if "url" in config: updawg.url = config["url"] # Set custom url (optional)
 
 # Create array for custom checks
 # (checkType, checkFilters, func)
