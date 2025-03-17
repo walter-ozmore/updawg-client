@@ -56,7 +56,7 @@ install() {
 	fi
 
 	# Copy our systemctl file
-	ln -S "/etc/updawg/updawg.service" "/etc/systemd/system" # Runner file
+	ln -s "/etc/updawg/updawg.service" "/etc/systemd/system" # Runner file
 	systemctl daemon-reload
 }
 
